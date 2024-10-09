@@ -9,3 +9,4 @@ This project demonstrates basic CRUD operations (GET, PUT, PATCH, DELETE) with X
 
 ## Data View In Xata DataBase
 
+![Screenshot from 2024-10-09 09-35-10](https://github.com/user-attachments/assets/6cbe8c56-ba8a-4ff4-a79d-d84c51886bd6)
