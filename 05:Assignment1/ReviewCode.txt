@@ -1,0 +1,162 @@
+import express, { Express, Request, Response } from "express";
+import dotenv from "dotenv";
+import { getXataClient } from "./xata";
+import cors from "cors";
+import { body, param, validationResult } from "express-validator";
+import { matchedData } from "express-validator";
+
+dotenv.config();
+
+// Inference
+const app: Express = express();
+const port = process.env.PORT || 7000;
+
+const xata = getXataClient();
+
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+// Validator middleware to check for errors
+const validateRequest = async (req: Request, res: Response, next: Function): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return; // Ensure the function stops after sending a response
+  }
+  next();
+};
+
+// GET Request
+app.get("/api/v1/users", async (req: Request, res: Response) => {
+  try {
+    const users = await xata.db.users.getAll();
+    res.json({
+      message: "Users fetched successfully",
+      data: users,
+    });
+  } catch (err) {
+    console.error("Error fetching users", err);
+    res.status(500).json({
+      message: "Error fetching users",
+    });
+  }
+});
+
+// POST Request with validation
+app.post(
+  "/api/v1/users",
+  [
+    body("UserID").notEmpty().withMessage("UserID is required"),
+    body("FirstName").notEmpty().withMessage("First Name is required"),
+    body("LastName").notEmpty().withMessage("Last Name is required"),
+    body("Email").isEmail().withMessage("Invalid email format"),
+    body("Phone").isMobilePhone("any").withMessage("Invalid phone number"),
+    body("Country").notEmpty().withMessage("Country is required"),
+  ],
+  validateRequest, // Use the validator middleware
+  async (req: Request, res: Response) => {
+    try {
+      const newUser = await xata.db.users.create(matchedData(req));
+      console.log(newUser);
+
+      res.json({
+        message: "User created successfully",
+        data: newUser,
+      });
+    } catch (err) {
+      console.log("Error creating user", err);
+      res.status(500).json({
+        message: "Error creating user",
+      });
+    }
+  }
+);
+
+// PUT Request with validation
+app.put(
+  "/api/v1/users/:id",
+  [
+    param("id").notEmpty().withMessage("UserID is required"),
+    body("FirstName").optional().notEmpty().withMessage("First Name is required"),
+    body("LastName").optional().notEmpty().withMessage("Last Name is required"),
+    body("Email").optional().isEmail().withMessage("Invalid email format"),
+    body("Phone").optional().isMobilePhone("any").withMessage("Invalid phone number"),
+    body("Country").optional().notEmpty().withMessage("Country is required"),
+  ],
+  validateRequest, // Use the validator middleware
+  async (req: Request, res: Response) => {
+    try {
+      const params = req.params.id;
+      const updatedUser = await xata.db.users.update(params, matchedData(req));
+      console.log(updatedUser);
+
+      res.json({
+        message: "User updated successfully",
+        data: updatedUser,
+      });
+    } catch (err) {
+      console.error("Error updating user", err);
+      res.status(500).json({
+        message: "Error updating user",
+      });
+    }
+  }
+);
+
+// PATCH Request with validation
+app.patch(
+  "/api/v1/users/:id",
+  [
+    param("id").notEmpty().withMessage("UserID is required"),
+    body("FirstName").optional().notEmpty().withMessage("First Name cannot be empty"),
+    body("LastName").optional().notEmpty().withMessage("Last Name cannot be empty"),
+    body("Email").optional().isEmail().withMessage("Invalid email format"),
+    body("Phone").optional().isMobilePhone("any").withMessage("Invalid phone number"),
+    body("Country").optional().notEmpty().withMessage("Country cannot be empty"),
+  ],
+  validateRequest, // Use the validator middleware
+  async (req: Request, res: Response) => {
+    try {
+      const params = req.params.id;
+      const partialUpdateUser = await xata.db.users.update(params, matchedData(req));
+      console.log(partialUpdateUser);
+
+      res.json({
+        message: "User partially updated successfully",
+        data: partialUpdateUser,
+      });
+    } catch (err) {
+      console.error("Error partially updating user", err);
+      res.status(500).json({
+        message: "Error partially updating user",
+      });
+    }
+  }
+);
+
+// DELETE Request
+app.delete("/api/v1/users/:id", async (req: Request, res: Response) => {
+  try {
+    const params = req.params.id;
+
+    const user = await xata.db.users.delete(params);
+    console.log(user);
+
+    res.json({
+      message: "User deleted successfully",
+      data: user,
+    });
+  } catch (err) {
+    console.error("Error deleting user", err);
+    res.status(500).json({
+      message: "Error deleting user",
+    });
+  }
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`[server]: Server TypeScript is running at http://localhost:${port} 🎉🎉🎉🎉🎉`);
+});

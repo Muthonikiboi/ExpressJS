@@ -1,6 +1,6 @@
 # Xata CRUD Operations
 
-This project demonstrates basic CRUD operations (GET, PUT, PATCH, DELETE) with Xata, using `xata.ts` and `index.ts`.
+This project demonstrates basic CRUD operations (GET, POST, PUT, PATCH, DELETE) with Xata, using `xata.ts` and `index.ts`.
 
 ## Files
 
