@@ -5,7 +5,6 @@ import userRoutes from "./Routes/userRoutes";
 
 dotenv.config();
 
-// Inference
 const app: Express = express();
 const port = process.env.PORT || 7000;
 
